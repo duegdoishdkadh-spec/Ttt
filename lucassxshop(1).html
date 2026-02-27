@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameCode Elite Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap');
+        body { font-family: 'Kanit', sans-serif; background-color: #f1f5f9; }
+        .modal { display: none; position: fixed; z-index: 1000; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); }
+        .product-card:hover { transform: translateY(-8px); transition: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-gate" class="fixed inset-0 z-[2000] bg-slate-900 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 overflow-hidden">
+            <div class="text-center mb-6">
+                <div class="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-user-shield text-3xl"></i>
+                </div>
+                <h2 id="auth-header" class="text-2xl font-bold text-slate-800">เข้าสู่ระบบร้านค้า</h2>
+            </div>
+
+            <div class="flex gap-2 mb-6 bg-slate-100 p-1 rounded-2xl">
+                <button onclick="changeAuthTab('login')" id="tab-login" class="flex-1 py-2 rounded-xl bg-white shadow font-bold text-blue-600">Login</button>
+                <button onclick="changeAuthTab('register')" id="tab-reg" class="flex-1 py-2 rounded-xl font-bold text-slate-500">Register</button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="relative">
+                    <i class="fas fa-user absolute left-4 top-4 text-slate-400"></i>
+                    <input type="text" id="auth-user" placeholder="Username" class="w-full border-0 bg-slate-50 p-4 pl-12 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-4 top-4 text-slate-400"></i>
+                    <input type="password" id="auth-pass" placeholder="Password" class="w-full border-0 bg-slate-50 p-4 pl-12 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                
+                <button onclick="executeAuth()" id="auth-main-btn" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-blue-700 active:scale-95 transition-all">
+                    เข้าสู่ระบบ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content" class="hidden">
+        <nav class="bg-slate-900 text-white sticky top-0 z-50 shadow-2xl">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="changePage('shop')">
+                    <div class="bg-blue-600 p-2 rounded-lg"><i class="fas fa-store"></i></div>
+                    <span class="text-xl font-bold tracking-widest uppercase">Toon<span class="text-blue-400">Shop</span></span>
+                </div>
+                <div class="flex items-center gap-6">
+                    <button onclick="openAdminPortal()" class="text-xs text-slate-400 hover:text-red-400 transition uppercase tracking-widest font-bold">Admin Panel</button>
+                    <div class="relative cursor-pointer bg-slate-800 p-2 rounded-full px-4 hover:bg-slate-700 transition" onclick="showCartModal()">
+                        <i class="fas fa-shopping-cart text-blue-400"></i>
+                        <span id="badge-count" class="ml-2 font-bold">0</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container mx-auto px-4 py-10">
+            <section id="view-shop">
+                <div class="flex items-center justify-between mb-10">
+                    <h2 class="text-3xl font-bold text-slate-800 border-l-8 border-blue-600 pl-4">Game Redeem Codes</h2>
+                </div>
+                <div id="shop-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    </div>
+            </section>
+
+            <section id="view-admin" class="hidden space-y-10">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 max-w-2xl mx-auto">
+                    <h3 class="text-xl font-bold mb-6 flex items-center gap-2 text-slate-800">
+                        <i class="fas fa-plus-circle text-blue-600"></i> เพิ่มสินค้าใหม่เข้าระบบ
+                    </h3>
+                    <div class="space-y-4">
+                        <input type="text" id="add-name" placeholder="ชื่อสินค้า (เช่น 1000 Diamonds)" class="w-full border p-4 rounded-2xl bg-slate-50 outline-none">
+                        <input type="number" id="add-price" placeholder="ราคา (บาท)" class="w-full border p-4 rounded-2xl bg-slate-50 outline-none">
+                        <input type="text" id="add-img" placeholder="ลิงก์รูปภาพสินค้า (URL)" class="w-full border p-4 rounded-2xl bg-slate-50 outline-none">
+                        <button onclick="handleProductStorage()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition">บันทึกข้อมูลสินค้า</button>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold mb-6">Database ออเดอร์ลูกค้า</h3>
+                    <div id="order-history-list" class="space-y-4"></div>
+                </div>
+            </section>
+
+            <section id="view-checkout" class="hidden max-w-xl mx-auto bg-white p-8 rounded-3xl shadow-2xl">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold text-slate-800">ยืนยันข้อมูลจัดส่ง</h2>
+                    <p class="text-slate-400">กรุณากรอกข้อมูลให้ครบถ้วนเพื่อรับสินค้า</p>
+                </div>
+                <div class="bg-blue-600 text-white p-6 rounded-2xl mb-8 shadow-lg shadow-blue-500/30">
+                    <p class="text-[10px] uppercase font-bold tracking-[0.2em] mb-1 opacity-80">พร้อมเพย์ / วอลเล็ท</p>
+                    <p class="text-3xl font-bold">061-352-3816</p>
+                    <p class="text-xs mt-2 italic">*ชื่อบัญชี: ToonDev Official*</p>
+                </div>
+                <form id="submission-form" class="space-y-4">
+                    <input type="text" id="f-name" placeholder="ชื่อ Facebook" required class="w-full border p-4 rounded-2xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600">
+                    <input type="url" id="f-link" placeholder="ลิงก์โปรไฟล์ Facebook" required class="w-full border p-4 rounded-2xl bg-slate-50 outline-none focus:ring-2 focus:ring-blue-600">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-xl shadow-xl hover:bg-blue-700 transition active:scale-95">ยืนยันและส่งคำสั่งซื้อ</button>
+                </form>
+            </section>
+        </main>
+    </div>
+
+    <div id="cart-modal" class="modal flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative">
+            <div class="p-6 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="text-xl font-bold">สินค้าในตะกร้า</h3>
+                <button onclick="hideCartModal()" class="text-slate-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            <div id="cart-items-box" class="p-6 max-h-[50vh] overflow-y-auto space-y-4 bg-slate-50">
+                </div>
+            <div class="p-8 border-t bg-white">
+                <div class="flex justify-between text-2xl font-bold text-slate-800 mb-8">
+                    <span>ราคารวม:</span>
+                    <span id="final-total" class="text-blue-600">0 ฿</span>
+                </div>
+                <button onclick="navigateToCheckout()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:bg-blue-700 transition">ไปยังหน้าแจ้งโอน</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentAuthTab = 'login';
+        let productsDB = JSON.parse(localStorage.getItem('toon_v5_products')) || [];
+        let shoppingCart = [];
+
+        // --- 🔒 AUTHENTICATION LOGIC ---
+        function changeAuthTab(tab) {
+            currentAuthTab = tab;
+            document.getElementById('auth-header').innerText = tab === 'login' ? 'เข้าสู่ระบบร้านค้า' : 'สมัครสมาชิกใหม่';
+            document.getElementById('auth-main-btn').innerText = tab === 'login' ? 'เข้าสู่ระบบ' : 'ยืนยันการสมัคร';
+            document.getElementById('tab-login').className = tab === 'login' ? "flex-1 py-2 rounded-xl bg-white shadow font-bold text-blue-600" : "flex-1 py-2 rounded-xl font-bold text-slate-500";
+            document.getElementById('tab-reg').className = tab === 'register' ? "flex-1 py-2 rounded-xl bg-white shadow font-bold text-blue-600" : "flex-1 py-2 rounded-xl font-bold text-slate-500";
+        }
+
+        function executeAuth() {
+            const u = document.getElementById('auth-user').value.trim();
+            const p = document.getElementById('auth-pass').value.trim();
+            if(!u || !p) return alert("กรุณากรอก Username และ Password");
+
+            if(currentAuthTab === 'register') {
+                localStorage.setItem(`acc_${u}`, JSON.stringify({u, p}));
+                alert("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบด้วยชื่อบัญชีของคุณ");
+                changeAuthTab('login');
+            } else {
+                const storedAcc = JSON.parse(localStorage.getItem(`acc_${u}`));
+                if(storedAcc && storedAcc.p === p) {
+                    document.getElementById('auth-gate').style.display = 'none';
+                    document.getElementById('main-content').classList.remove('hidden');
+                    renderShopDisplay();
+                } else {
+                    alert("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+                }
+            }
+        }
+
+        // --- 🌐 SHOP SYSTEM ---
+        function renderShopDisplay() {
+            const grid = document.getElementById('shop-container');
+            if(productsDB.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-20 text-center text-slate-400 bg-white rounded-3xl border-2 border-dashed">ยังไม่มีสินค้า (Admin Panel เพื่อเพิ่มสินค้า)</div>`;
+                return;
+            }
+            grid.innerHTML = productsDB.map(p => `
+                <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-slate-200 product-card flex flex-col">
+                    <img src="${p.img || 'https://via.placeholder.com/400x300?text=GAME+CODE'}" class="h-44 w-full object-cover rounded-2xl mb-4 bg-slate-100">
+                    <h3 class="font-bold text-slate-800 text-lg line-clamp-1">${p.name}</h3>
+                    <p class="text-blue-600 font-bold text-xl mb-5">${p.price.toLocaleString()} ฿</p>
+                    <div class="flex items-center gap-3 bg-slate-100 p-2 rounded-2xl mt-auto">
+                        <input type="checkbox" id="chk-${p.id}" class="w-6 h-6 accent-blue-600 cursor-pointer">
+                        <input type="number" id="qty-${p.id}" value="1" min="1" class="w-12 text-center bg-transparent font-bold text-slate-700">
+                        <button onclick="commitToCart(${p.id})" class="flex-1 bg-slate-900 text-white py-2 rounded-xl font-bold text-xs hover:bg-blue-600 transition">ใส่ตะกร้า</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function commitToCart(id) {
+            const checkbox = document.getElementById(`chk-${id}`);
+            if(!checkbox.checked) return alert("กรุณาติ๊กเลือกสินค้าที่ต้องการก่อนครับ");
+            
+            const qty = parseInt(document.getElementById(`qty-${id}`).value);
+            const item = productsDB.find(x => x.id === id);
+            
+            const existingInCart = shoppingCart.find(x => x.id === id);
+            if(existingInCart) {
+                existingInCart.qty += qty;
+            } else {
+                shoppingCart.push({...item, qty});
+            }
+            
+            document.getElementById('badge-count').innerText = shoppingCart.length;
+            alert(`เพิ่ม ${item.name} เรียบร้อย! ตรวจสอบที่ตะกร้าด้านบน`);
+        }
+
+        // --- 🛒 CART LOGIC ---
+        function showCartModal() {
+            document.getElementById('cart-modal').style.display = 'flex';
+            const box = document.getElementById('cart-items-box');
+            let sum = 0;
+            if(shoppingCart.length === 0) {
+                box.innerHTML = `<p class="text-center py-10 text-slate-400">ยังไม่มีสินค้าในตะกร้า</p>`;
+            } else {
+                box.innerHTML = shoppingCart.map(i => {
+                    sum += (i.price * i.qty);
+                    return `
+                        <div class="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                            <div><p class="font-bold text-slate-800 text-sm">${i.name}</p><p class="text-xs text-slate-400">จำนวน: ${i.qty}</p></div>
+                            <p class="font-bold text-blue-600 text-sm">${(i.price * i.qty).toLocaleString()} ฿</p>
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById('final-total').innerText = sum.toLocaleString() + " ฿";
+        }
+
+        function hideCartModal() { document.getElementById('cart-modal').style.display = 'none'; }
+
+        function navigateToCheckout() {
+            if(shoppingCart.length === 0) return alert("ตะกร้าว่างเปล่าครับ");
+            hideCartModal();
+            changePage('checkout');
+        }
+
+        // --- 🛠️ ADMIN & PAGE SYSTEM ---
+        function changePage(page) {
+            ['view-shop', 'view-admin', 'view-checkout'].forEach(id => document.getElementById(id).classList.add('hidden'));
+            document.getElementById(`view-${page}`).classList.remove('hidden');
+        }
+
+        function openAdminPortal() {
+            const pass = prompt("โปรดใส่รหัสผ่านแอดมิน:");
+            if(pass === "qwerasdzxppeejdff83") {
+                changePage('admin');
+                renderAdminOrderLogs();
+            } else { alert("รหัสผ่านไม่ถูกต้อง!"); }
+        }
+
+        function handleProductStorage() {
+            const n = document.getElementById('add-name').value;
+            const p = document.getElementById('add-price').value;
+            const i = document.getElementById('add-img').value;
+            if(!n || !p) return alert("กรุณากรอกชื่อและราคาเป็นอย่างน้อย");
+            
+            productsDB.push({id: Date.now(), name: n, price: parseInt(p), img: i || ''});
+            localStorage.setItem('toon_v5_products', JSON.stringify(productsDB));
+            alert("เพิ่มสินค้าสำเร็จ");
+            renderShopDisplay();
+            changePage('shop');
+        }
+
+        // --- 📋 SUBMISSION ---
+        document.getElementById('submission-form').onsubmit = function(e) {
+            e.preventDefault();
+            const orderID = 'TNX-' + Math.floor(100000 + Math.random() * 900000);
+            const orderData = {
+                id: orderID,
+                fbName: document.getElementById('f-name').value,
+                fbLink: document.getElementById('f-link').value,
+                total: document.getElementById('final-total').innerText,
+                date: new Date().toLocaleString(),
+                details: shoppingCart
+            };
+
+            let history = JSON.parse(localStorage.getItem('toon_v5_orders')) || [];
+            history.push(orderData);
+            localStorage.setItem('toon_v5_orders', JSON.stringify(history));
+
+            alert(`สั่งซื้อสำเร็จ!\nหมายเลขสั่งซื้อ: ${orderID}\nเจ้าหน้าที่จะติดต่อกลับผ่าน Facebook ครับ`);
+            location.reload();
+        }
+
+        function renderAdminOrderLogs() {
+            const logs = JSON.parse(localStorage.getItem('toon_v5_orders')) || [];
+            document.getElementById('order-history-list').innerHTML = logs.reverse().map(l => `
+                <div class="p-4 bg-slate-50 border rounded-2xl text-xs flex justify-between items-center">
+                    <div>
+                        <p class="font-bold text-blue-600 text-sm">#${l.id}</p>
+                        <p><b>ลูกค้า:</b> ${l.fbName}</p>
+                        <p class="text-[10px] text-slate-400">${l.date}</p>
+                    </div>
+                    <div class="text-right font-bold text-slate-800">${l.total}</div>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
+<div id="order-detail-modal" class="modal flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden">
+        <div class="p-6 bg-blue-600 text-white flex justify-between items-center">
+            <h3 class="text-xl font-bold">รายละเอียดการสั่งซื้อ</h3>
+            <button onclick="closeOrderDetail()" class="text-white text-3xl">&times;</button>
+        </div>
+        <div id="order-detail-content" class="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            </div>
+        <div class="p-4 bg-slate-50 text-center">
+            <button onclick="closeOrderDetail()" class="bg-slate-800 text-white px-8 py-2 rounded-xl">ปิดหน้าต่าง</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- ฟังก์ชันแสดงประวัติออเดอร์ในหน้า Admin (ปรับปรุงใหม่) ---
+    function renderAdminOrderLogs() {
+        const logs = JSON.parse(localStorage.getItem('toon_v5_orders')) || [];
+        const container = document.getElementById('order-history-list');
+        
+        if(logs.length === 0) {
+            container.innerHTML = `<p class="text-center py-10 text-slate-400">ยังไม่มีรายการสั่งซื้อ</p>`;
+            return;
+        }
+
+        container.innerHTML = logs.reverse().map((l, index) => `
+            <div class="p-4 bg-white border border-slate-200 rounded-2xl shadow-sm flex justify-between items-center hover:border-blue-400 transition-all cursor-pointer" 
+                 onclick="viewOrderDetails('${l.id}')">
+                <div class="flex items-center gap-4">
+                    <div class="bg-blue-50 text-blue-600 p-3 rounded-xl font-bold text-xs">#${l.id.split('-')[1]}</div>
+                    <div>
+                        <p class="font-bold text-slate-800">${l.fbName}</p>
+                        <p class="text-[10px] text-slate-400">${l.date}</p>
+                    </div>
+                </div>
+                <div class="text-right flex items-center gap-4">
+                    <div class="hidden md:block">
+                        <p class="text-xs text-slate-400">ยอดชำระ</p>
+                        <p class="font-bold text-blue-600">${l.total}</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-slate-300"></i>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // --- ฟังก์ชันกดดูรายละเอียดออเดอร์แบบเจาะจง ---
+    function viewOrderDetails(orderId) {
+        const logs = JSON.parse(localStorage.getItem('toon_v5_orders')) || [];
+        const order = logs.find(o => o.id === orderId);
+        if(!order) return;
+
+        const content = document.getElementById('order-detail-content');
+        document.getElementById('order-detail-modal').style.display = 'flex';
+
+        // สร้าง HTML สำหรับรายการสินค้า
+        const itemsHtml = order.details.map(item => `
+            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                <div>
+                    <p class="font-bold text-slate-800">${item.name}</p>
+                    <p class="text-xs text-slate-500 font-bold text-blue-500">จำนวน: ${item.qty} ชิ้น</p>
+                </div>
+                <p class="font-bold text-slate-700">${(item.price * item.qty).toLocaleString()} ฿</p>
+            </div>
+        `).join('');
+
+        content.innerHTML = `
+            <div class="border-b pb-4 mb-4">
+                <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">ข้อมูลลูกค้า</p>
+                <p class="text-lg font-bold text-slate-800 mt-1">${order.fbName}</p>
+                <a href="${order.fbLink}" target="_blank" class="text-blue-600 text-sm flex items-center gap-2 mt-1 underline">
+                    <i class="fab fa-facebook"></i> เปิดลิงก์เฟซบุ๊คลูกค้า
+                </a>
+            </div>
+            
+            <div class="space-y-3">
+                <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">รายการที่สั่งซื้อ</p>
+                ${itemsHtml}
+            </div>
+
+            <div class="mt-6 pt-4 border-t-2 border-dashed border-slate-200">
+                <div class="flex justify-between text-xl font-bold">
+                    <span class="text-slate-500 text-sm uppercase">ยอดชำระสุทธิ:</span>
+                    <span class="text-blue-600">${order.total}</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-4 text-center italic font-bold tracking-widest uppercase">ID: ${order.id}</p>
+            </div>
+        `;
+    }
+
+    function closeOrderDetail() {
+        document.getElementById('order-detail-modal').style.display = 'none';
+    }
+</script>
